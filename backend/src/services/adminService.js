@@ -59,4 +59,40 @@ const setUserActiveStatus = async ({ targetUserId, isActive, requestingAdminId }
   return user;
 };
 
-module.exports = { listUsers, setUserActiveStatus };
+const listPendingSellers = async ({ page = 1, limit = 20 } = {}) => {
+  const skip = (page - 1) * limit;
+  const filter = { approvalStatus: "pending" };
+
+  const [profiles, totalCount] = await Promise.all([
+    SellerProfile.find(filter).populate("user", "name email").skip(skip).limit(limit).sort({ createdAt: -1 }),
+    SellerProfile.countDocuments(filter),
+  ]);
+
+  return {
+    profiles,
+    pagination: {
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+    },
+  };
+};
+
+const approveSellerProfile = async (profileId, status, rejectionReason = null) => {
+  const profile = await SellerProfile.findById(profileId);
+  if (!profile) {
+    throw new ApiError(404, "Seller profile not found");
+  }
+
+  profile.approvalStatus = status;
+  if (status === "rejected") {
+    profile.rejectionReason = rejectionReason;
+  } else {
+    profile.rejectionReason = null;
+  }
+
+  await profile.save();
+  return profile;
+};
+
+module.exports = { listUsers, setUserActiveStatus, listPendingSellers, approveSellerProfile };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Shield, ClipboardCheck, BadgePercent, Users, Check, X, Trash2, ShieldAlert, Plus, Calendar, CreditCard, Lock } from 'lucide-react';
 import api from '../../services/api';
@@ -19,6 +18,7 @@ const AdminDashboard = () => {
   const [pendingProducts, setPendingProducts] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [users, setUsers] = useState([]);
+  const [pendingSellers, setPendingSellers] = useState([]);
 
   // Coupon Creation Form
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -49,12 +49,26 @@ const AdminDashboard = () => {
         const url = selectedRoleFilter ? `/admin/users?role=${selectedRoleFilter}` : '/admin/users';
         const response = await api.get(url);
         setUsers(response.data.data.users || []);
+      } else if (tab === 'sellers') {
+        const response = await api.get('/admin/sellers/pending');
+        setPendingSellers(response.data.data.profiles || []);
       }
     } catch (err) {
       console.error(`Failed to fetch ${tab} details:`, err);
       showToast(`Error fetching ${tab} metrics.`, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSellerApproval = async (profileId, status, rejectionReason = '') => {
+    try {
+      await api.patch(`/admin/sellers/${profileId}/approval`, { status, rejectionReason });
+      showToast(`Seller status successfully updated to ${status}!`, 'success');
+      setPendingSellers((prev) => prev.filter((p) => p._id !== profileId));
+    } catch (err) {
+      console.error('Failed to update seller status:', err);
+      showToast('Failed to update seller verification status.', 'error');
     }
   };
 
@@ -211,6 +225,15 @@ const AdminDashboard = () => {
         >
           <Users size={18} />
           <span>User Profiles</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('sellers')}
+          className={`pb-4 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'sellers' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <ShieldCheck size={18} />
+          <span>Seller Onboarding ({activeTab === 'sellers' && !loading ? pendingSellers.length : '...'})</span>
         </button>
       </div>
 
@@ -430,6 +453,80 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Seller Onboarding Verification approvals panel */}
+          {activeTab === 'sellers' && (
+            <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
+              {pendingSellers.length === 0 ? (
+                <div className="text-center py-20 space-y-4">
+                  <ShieldCheck className="mx-auto text-slate-300" size={48} />
+                  <p className="text-sm font-semibold text-slate-500">No pending seller registrations. Inbox clear!</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <th className="py-4 px-6">Store Details</th>
+                        <th className="py-4 px-6">GSTIN</th>
+                        <th className="py-4 px-6">Verification Document</th>
+                        <th className="py-4 px-6 text-right">Moderation</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs divide-y divide-slate-50">
+                      {pendingSellers.map((seller) => (
+                        <tr key={seller._id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-4 px-6 min-w-[200px] space-y-1">
+                            <p className="font-semibold text-slate-800">{seller.storeName}</p>
+                            <p className="text-[10px] text-slate-400 font-medium truncate max-w-[220px]">
+                              {seller.storeDescription || 'No description provided.'}
+                            </p>
+                            <p className="text-[9px] text-slate-500 font-medium">
+                              User: {seller.user?.name} ({seller.user?.email})
+                            </p>
+                          </td>
+                          <td className="py-4 px-6 font-semibold font-mono text-slate-800">
+                            {seller.gstin}
+                          </td>
+                          <td className="py-4 px-6">
+                            {seller.verificationDocumentUrl ? (
+                              <a
+                                href={seller.verificationDocumentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-indigo-600 hover:text-indigo-700 hover:underline font-bold"
+                              >
+                                View Certificate Document →
+                              </a>
+                            ) : (
+                              <span className="text-slate-400 italic">No document</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-6 text-right space-x-2 whitespace-nowrap">
+                            <button
+                              onClick={() => handleSellerApproval(seller._id, 'approved')}
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-100 rounded-xl font-bold transition-all cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = window.prompt('Enter rejection reason:');
+                                if (reason !== null) handleSellerApproval(seller._id, 'rejected', reason);
+                              }}
+                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-100 rounded-xl font-bold transition-all cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

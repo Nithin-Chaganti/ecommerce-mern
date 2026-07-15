@@ -36,4 +36,17 @@ const updateUserStatus = async (req, res) => {
     .json(new ApiResponse(200, safeUser, `User ${isActive ? "activated" : "deactivated"} successfully`));
 };
 
-module.exports = { getUsers, updateUserStatus };
+const getPendingSellers = async (req, res) => {
+  const { page, limit } = req.query;
+  const result = await adminService.listPendingSellers({ page, limit });
+  return res.status(200).json(new ApiResponse(200, result, "Pending sellers fetched successfully"));
+};
+
+const moderateSellerProfile = async (req, res) => {
+  const { profileId } = req.params;
+  const { status, rejectionReason } = req.body; // "approved" | "rejected"
+  const profile = await adminService.approveSellerProfile(profileId, status, rejectionReason);
+  return res.status(200).json(new ApiResponse(200, profile, `Seller profile status updated to ${status}`));
+};
+
+module.exports = { getUsers, updateUserStatus, getPendingSellers, moderateSellerProfile };

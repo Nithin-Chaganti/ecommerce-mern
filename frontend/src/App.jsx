@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -7,19 +7,30 @@ import { WishlistProvider } from './context/WishlistContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import Profile from './pages/auth/Profile';
-import Home from './pages/Home';
-import Catalog from './pages/Catalog';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Wishlist from './pages/Wishlist';
-import Orders from './pages/Orders';
-import SellerDashboard from './pages/seller/SellerDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
 import Button from './components/common/Button';
 import { ShieldAlert } from 'lucide-react';
+
+// Lazy load route pages
+const Login = React.lazy(() => import('./pages/auth/Login'));
+const Register = React.lazy(() => import('./pages/auth/Register'));
+const Profile = React.lazy(() => import('./pages/auth/Profile'));
+const Home = React.lazy(() => import('./pages/Home'));
+const Catalog = React.lazy(() => import('./pages/Catalog'));
+const ProductDetails = React.lazy(() => import('./pages/ProductDetails'));
+const Cart = React.lazy(() => import('./pages/Cart'));
+const Wishlist = React.lazy(() => import('./pages/Wishlist'));
+const Orders = React.lazy(() => import('./pages/Orders'));
+const SellerDashboard = React.lazy(() => import('./pages/seller/SellerDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
+
+const PageLoader = () => (
+  <div className="min-h-[70vh] flex items-center justify-center bg-slate-50">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+      <span className="text-xs font-semibold text-slate-400 select-none">Loading page components...</span>
+    </div>
+  </div>
+);
 
 // Temporary Unauthorized Page
 const Unauthorized = () => {
@@ -68,72 +79,74 @@ function App() {
 
                 {/* Main Content Area */}
                 <main className="flex-1 bg-slate-50">
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/unauthorized" element={<Unauthorized />} />
-                    <Route path="/catalog" element={<Catalog />} />
-                    <Route path="/product/:productId" element={<ProductDetails />} />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      <Route path="/catalog" element={<Catalog />} />
+                      <Route path="/product/:productId" element={<ProductDetails />} />
 
-                    {/* Customer Protected Routes */}
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/cart"
-                      element={
-                        <ProtectedRoute allowedRoles={['customer']}>
-                          <Cart />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/wishlist"
-                      element={
-                        <ProtectedRoute allowedRoles={['customer']}>
-                          <Wishlist />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/orders"
-                      element={
-                        <ProtectedRoute allowedRoles={['customer']}>
-                          <Orders />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Customer Protected Routes */}
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/cart"
+                        element={
+                          <ProtectedRoute allowedRoles={['customer']}>
+                            <Cart />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/wishlist"
+                        element={
+                          <ProtectedRoute allowedRoles={['customer']}>
+                            <Wishlist />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/orders"
+                        element={
+                          <ProtectedRoute allowedRoles={['customer']}>
+                            <Orders />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Seller Protected Routes */}
-                    <Route
-                      path="/seller/dashboard"
-                      element={
-                        <ProtectedRoute allowedRoles={['seller']}>
-                          <SellerDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Seller Protected Routes */}
+                      <Route
+                        path="/seller/dashboard"
+                        element={
+                          <ProtectedRoute allowedRoles={['seller']}>
+                            <SellerDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Admin Protected Routes */}
-                    <Route
-                      path="/admin/dashboard"
-                      element={
-                        <ProtectedRoute allowedRoles={['admin']}>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Admin Protected Routes */}
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute allowedRoles={['admin']}>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Fallback Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                      {/* Fallback Route */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
                 </main>
 
                 {/* Footer */}
@@ -148,4 +161,3 @@ function App() {
 }
 
 export default App;
-

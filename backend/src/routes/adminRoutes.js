@@ -9,8 +9,7 @@
  * accidentally forget on a newly added route.
  */
 
-const express = require("express");
-const { getUsers, updateUserStatus } = require("../controllers/adminController");
+const { getUsers, updateUserStatus, getPendingSellers, moderateSellerProfile } = require("../controllers/adminController");
 const { updateUserStatusValidationRules } = require("../validators/adminValidators");
 const validateRequest = require("../middleware/validateRequest");
 const protect = require("../middleware/authMiddleware");
@@ -29,5 +28,7 @@ router.patch(
   validateRequest,
   asyncHandler(updateUserStatus)
 );
+router.get("/sellers/pending", asyncHandler(getPendingSellers));
+router.patch("/sellers/:profileId/approval", asyncHandler(moderateSellerProfile));
 
 module.exports = router;
