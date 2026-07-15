@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ClipboardList, Copy, Check, ShieldAlert, Package, Calendar, MapPin, CreditCard, ChevronRight } from 'lucide-react';
 import api from '../services/api';
@@ -32,6 +31,29 @@ const Orders = () => {
     setCopiedId(orderId);
     showToast('Order ID copied to clipboard!', 'info');
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order? This will restore product stock levels.')) return;
+    try {
+      await api.patch(`/orders/${orderId}/cancel`);
+      // Dynamically update the status in local state
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === orderId
+            ? {
+                ...o,
+                orderStatus: 'cancelled',
+                items: o.items.map((i) => ({ ...i, itemStatus: 'cancelled' }))
+              }
+            : o
+        )
+      );
+      showToast('Order cancelled successfully and stock levels restored!', 'success');
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      showToast(err.response?.data?.message || 'Failed to cancel order.', 'error');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -160,7 +182,15 @@ const Orders = () => {
                       <span className="font-bold text-slate-800 block mt-0.5">₹{order.grandTotal}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    {['placed', 'confirmed'].includes(order.orderStatus) && (
+                      <button
+                        onClick={() => handleCancelOrder(order._id)}
+                        className="px-3 py-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/70 border border-rose-100 rounded-full transition-colors cursor-pointer"
+                      >
+                        Cancel Order
+                      </button>
+                    )}
                     <span
                       className={`px-3 py-1 text-xs font-semibold border rounded-full capitalize select-none ${getStatusColor(order.orderStatus)}`}
                     >

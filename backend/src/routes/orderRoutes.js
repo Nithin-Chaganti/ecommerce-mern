@@ -1,6 +1,6 @@
 const express = require("express");
 const { param, query } = require("express-validator");
-const { getMyOrders, getMyOrderById } = require("../controllers/orderController");
+const { getMyOrders, getMyOrderById, cancelMyOrder } = require("../controllers/orderController");
 const validateRequest = require("../middleware/validateRequest");
 const protect = require("../middleware/authMiddleware");
 const restrictTo = require("../middleware/roleMiddleware");
@@ -17,5 +17,6 @@ router.get(
   asyncHandler(getMyOrders)
 );
 router.get("/:orderId", [param("orderId").isMongoId()], validateRequest, asyncHandler(getMyOrderById));
+router.patch("/:orderId/cancel", [param("orderId").isMongoId()], validateRequest, asyncHandler(cancelMyOrder));
 
 module.exports = router;

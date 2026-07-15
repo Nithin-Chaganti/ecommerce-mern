@@ -12,4 +12,9 @@ const getMyOrderById = async (req, res) => {
   return res.status(200).json(new ApiResponse(200, order, "Order fetched"));
 };
 
-module.exports = { getMyOrders, getMyOrderById };
+const cancelMyOrder = async (req, res) => {
+  const order = await orderService.cancelOrder(req.user.id, req.params.orderId);
+  return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
+};
+
+module.exports = { getMyOrders, getMyOrderById, cancelMyOrder };

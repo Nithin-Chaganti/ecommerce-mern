@@ -41,4 +41,37 @@ const getMyOrderById = async (customerId, orderId) => {
   return order;
 };
 
-module.exports = { listMyOrders, getMyOrderById };
+const cancelOrder = async (customerId, orderId) => {
+  const order = await Order.findOne({ _id: orderId, customer: customerId });
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  if (!["placed", "confirmed"].includes(order.orderStatus)) {
+    throw new ApiError(400, `Orders in '${order.orderStatus}' status cannot be cancelled`);
+  }
+
+  // Restore inventory stock levels
+  const Product = require("../models/Product");
+  const bulkOps = order.items.map((item) => ({
+    updateOne: {
+      filter: { _id: item.product },
+      update: { $inc: { stock: item.quantity } },
+    },
+  }));
+
+  if (bulkOps.length > 0) {
+    await Product.bulkWrite(bulkOps);
+  }
+
+  order.orderStatus = "cancelled";
+  // Set all items fulfillment status to cancelled
+  order.items.forEach((item) => {
+    item.itemStatus = "cancelled";
+  });
+
+  await order.save();
+  return order;
+};
+
+module.exports = { listMyOrders, getMyOrderById, cancelOrder };
