@@ -105,6 +105,18 @@ const ProductDetails = () => {
     }
   };
 
+  const handleHideReview = async (reviewId) => {
+    try {
+      await api.patch(`/reviews/${reviewId}/moderate`, { isApproved: false });
+      showToast('Review has been hidden from public catalog.', 'success');
+      setReviews((prev) => prev.filter((r) => r._id !== reviewId));
+      fetchProduct();
+    } catch (err) {
+      console.error('Failed to moderate review:', err);
+      showToast('Failed to hide review.', 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-sans space-y-8">
@@ -472,11 +484,23 @@ const ProductDetails = () => {
                         </div>
                       </div>
                     </div>
-                    {/* Date */}
-                    <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                      <Calendar size={12} />
-                      <span>{new Date(rev.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                    </span>
+                    {/* Date and Moderation Actions */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                        <Calendar size={12} />
+                        <span>{new Date(rev.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                      </span>
+                      {user && user.role === 'admin' && (
+                        <button
+                          onClick={() => handleHideReview(rev._id)}
+                          className="px-2 py-0.5 border border-rose-200 hover:border-rose-400 text-rose-600 hover:bg-rose-50/50 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Hide review from catalog"
+                        >
+                          <X size={10} />
+                          <span>Hide Review</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {/* Content comment */}
                   <p className="text-sm text-slate-600 leading-relaxed pl-12">
