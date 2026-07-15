@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Trash2, Loader2, Sparkles } from 'lucide-react';
 import api from '../../services/api';
@@ -20,6 +19,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit, onSaveSuccess }) => {
     discountPercent: 0,
     stock: '',
     category: '',
+    tags: '',
     images: []
   });
 
@@ -46,6 +46,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit, onSaveSuccess }) => {
         discountPercent: productToEdit.discountPercent || 0,
         stock: productToEdit.stock || '',
         category: typeof productToEdit.category === 'object' ? productToEdit.category._id : productToEdit.category || '',
+        tags: productToEdit.tags ? productToEdit.tags.join(', ') : '',
         images: productToEdit.images || []
       });
     } else {
@@ -56,6 +57,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit, onSaveSuccess }) => {
         discountPercent: 0,
         stock: '',
         category: '',
+        tags: '',
         images: []
       });
     }
@@ -134,13 +136,18 @@ const ProductModal = ({ isOpen, onClose, productToEdit, onSaveSuccess }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    const payload = {
+      ...formData,
+      tags: formData.tags.split(',').map((t) => t.trim()).filter((t) => t !== '')
+    };
+
     setSubmitting(true);
     try {
       if (productToEdit) {
-        await api.patch(`/products/${productToEdit._id}`, formData);
+        await api.patch(`/products/${productToEdit._id}`, payload);
         showToast('Product updated successfully and submitted for moderation!', 'success');
       } else {
-        await api.post('/products', formData);
+        await api.post('/products', payload);
         showToast('Product submitted for admin review successfully!', 'success');
       }
       onSaveSuccess();
@@ -274,6 +281,16 @@ const ProductModal = ({ isOpen, onClose, productToEdit, onSaveSuccess }) => {
                 ))}
               </select>
               {errors.category && <p className="text-rose-500 text-xs mt-1">{errors.category}</p>}
+            </div>
+
+            <div>
+              <Input
+                label="Search Tags (Comma separated)"
+                name="tags"
+                value={formData.tags}
+                onChange={handleChange}
+                placeholder="e.g. clothing, summer, shirt"
+              />
             </div>
           </div>
 

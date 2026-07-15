@@ -752,8 +752,8 @@ const SellerDashboard = () => {
         <ProductModal
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
-          product={selectedProduct}
-          onSave={fetchDashboardData}
+          productToEdit={selectedProduct}
+          onSaveSuccess={fetchDashboardData}
         />
       )}
 
