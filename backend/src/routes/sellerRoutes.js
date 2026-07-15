@@ -11,7 +11,12 @@
  */
 
 const express = require("express");
-const { getMyProfile } = require("../controllers/sellerController");
+const {
+  getMyProfile,
+  listSellerOrders,
+  updateOrderItemStatus,
+  getSellerAnalytics,
+} = require("../controllers/sellerController");
 const protect = require("../middleware/authMiddleware");
 const restrictTo = require("../middleware/roleMiddleware");
 const asyncHandler = require("../utils/asyncHandler");
@@ -23,5 +28,8 @@ const router = express.Router();
 router.use(protect, restrictTo("seller", "admin"));
 
 router.get("/profile", asyncHandler(getMyProfile));
+router.get("/orders", asyncHandler(listSellerOrders));
+router.patch("/orders/:orderId/items/:itemId/status", asyncHandler(updateOrderItemStatus));
+router.get("/analytics", asyncHandler(getSellerAnalytics));
 
 module.exports = router;
