@@ -9,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Skeleton from '../components/common/Skeleton';
+import ProductCard from '../components/product/ProductCard';
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -29,6 +30,50 @@ const ProductDetails = () => {
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Recommendations state
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(true);
+
+  // Sentiment badge color styling
+  const getSentimentColor = (label) => {
+    switch (label) {
+      case 'positive':
+        return 'bg-emerald-50 text-emerald-600 border-emerald-100/50';
+      case 'negative':
+        return 'bg-rose-50 text-rose-600 border-rose-100/50';
+      case 'neutral':
+      default:
+        return 'bg-slate-50 text-slate-500 border-slate-100/50';
+    }
+  };
+
+  // Recommendations calculation
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (!product || !product.category) return;
+      setRelatedLoading(true);
+      try {
+        const catId = typeof product.category === 'object' ? product.category._id : product.category;
+        const response = await api.get(`/products?category=${catId}&limit=12`);
+        const list = response.data.data.products || [];
+        const filteredList = list.filter((p) => p._id !== product._id);
+        const currentTags = product.tags || [];
+        const rankedList = filteredList.map((p) => {
+          const pTags = p.tags || [];
+          const overlap = pTags.filter((t) => currentTags.includes(t)).length;
+          return { ...p, overlap };
+        });
+        rankedList.sort((a, b) => b.overlap - a.overlap);
+        setRelatedProducts(rankedList.slice(0, 4));
+      } catch (err) {
+        console.error('Failed to load related products:', err);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+    fetchRelatedProducts();
+  }, [product]);
 
   // Fetch product information
   const fetchProduct = useCallback(async () => {
@@ -469,7 +514,7 @@ const ProductDetails = () => {
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-slate-800">{rev.customer?.name || 'Verified Buyer'}</h4>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5">
                           {/* Stars */}
                           <div className="flex text-amber-400">
                             {[...Array(5)].map((_, i) => (
@@ -481,6 +526,11 @@ const ProductDetails = () => {
                               />
                             ))}
                           </div>
+                          {rev.sentimentLabel && (
+                            <span className={`px-1.5 py-0.5 text-[9px] font-bold border uppercase rounded select-none ${getSentimentColor(rev.sentimentLabel)}`}>
+                              {rev.sentimentLabel}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -513,6 +563,36 @@ const ProductDetails = () => {
 
         </div>
 
+      </div>
+
+      {/* 2. Related Products Recommendations Carousel */}
+      <div className="border-t border-slate-100 pt-10 space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold font-display text-slate-900">Recommended for You</h2>
+          <p className="text-xs text-slate-400">Handpicked items matching your preferences from this category.</p>
+        </div>
+
+        {relatedLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-60 rounded-2xl" />
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : relatedProducts.length === 0 ? (
+          <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+            No related products found in this category currently.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

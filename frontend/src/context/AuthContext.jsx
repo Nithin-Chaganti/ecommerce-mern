@@ -1,4 +1,3 @@
-// Auth Context
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api, { setAccessToken } from '../services/api';
 
@@ -108,6 +107,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    setUser,
     loading,
     login,
     register,
