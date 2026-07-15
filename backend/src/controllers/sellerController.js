@@ -13,6 +13,11 @@ const getMyProfile = async (req, res) => {
   return res.status(200).json(new ApiResponse(200, profile, "Seller profile fetched"));
 };
 
+const updateSellerProfile = async (req, res) => {
+  const updatedProfile = await sellerService.updateOwnSellerProfile(req.user.id, req.body);
+  return res.status(200).json(new ApiResponse(200, updatedProfile, "Seller profile updated successfully"));
+};
+
 const listSellerOrders = async (req, res) => {
   const { page, limit } = req.query;
   const result = await sellerOrderService.listOrdersForSeller(req.user.id, { page, limit });
@@ -33,6 +38,7 @@ const getSellerAnalytics = async (req, res) => {
 
 module.exports = {
   getMyProfile,
+  updateSellerProfile,
   listSellerOrders,
   updateOrderItemStatus,
   getSellerAnalytics,

@@ -13,6 +13,7 @@
 const express = require("express");
 const {
   getMyProfile,
+  updateSellerProfile,
   listSellerOrders,
   updateOrderItemStatus,
   getSellerAnalytics,
@@ -28,6 +29,7 @@ const router = express.Router();
 router.use(protect, restrictTo("seller", "admin"));
 
 router.get("/profile", asyncHandler(getMyProfile));
+router.patch("/profile", asyncHandler(updateSellerProfile));
 router.get("/orders", asyncHandler(listSellerOrders));
 router.patch("/orders/:orderId/items/:itemId/status", asyncHandler(updateOrderItemStatus));
 router.get("/analytics", asyncHandler(getSellerAnalytics));

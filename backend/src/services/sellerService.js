@@ -23,4 +23,24 @@ const getOwnSellerProfile = async (userId) => {
   return profile;
 };
 
-module.exports = { getOwnSellerProfile };
+const updateOwnSellerProfile = async (userId, updateData) => {
+  const profile = await SellerProfile.findOne({ user: userId });
+  if (!profile) {
+    throw new ApiError(404, "Seller profile not found");
+  }
+
+  const allowedFields = ["storeName", "storeDescription", "gstin", "businessAddress", "verificationDocumentUrl"];
+  allowedFields.forEach((field) => {
+    if (updateData[field] !== undefined) {
+      profile[field] = updateData[field];
+    }
+  });
+
+  // Trigger re-verification
+  profile.approvalStatus = "pending";
+
+  await profile.save();
+  return profile;
+};
+
+module.exports = { getOwnSellerProfile, updateOwnSellerProfile };
