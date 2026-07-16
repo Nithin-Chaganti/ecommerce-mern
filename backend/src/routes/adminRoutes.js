@@ -9,6 +9,7 @@
  * accidentally forget on a newly added route.
  */
 
+import express from "express";
 const { getUsers, updateUserStatus, getPendingSellers, moderateSellerProfile } = require("../controllers/adminController");
 const { updateUserStatusValidationRules } = require("../validators/adminValidators");
 const validateRequest = require("../middleware/validateRequest");
