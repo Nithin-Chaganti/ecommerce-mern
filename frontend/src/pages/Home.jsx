@@ -66,7 +66,7 @@ const Home = () => {
                 Explore Catalog
               </Button>
             </Link>
-            <Link to="/register">
+            <Link to="/register?role=seller">
               <Button variant="outlineWhite" size="lg">
                 Join as Seller
               </Button>
@@ -202,4 +202,3 @@ const Home = () => {
 };
 
 export default Home;
-
